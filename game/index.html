@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Stillwake — A Lantern Voyage</title>
+  <meta name="description" content="Stillwake is a hand-drawn lunar chart-puzzle: place buoys, plan a route, and wake the lost lanterns of a moonlit archipelago.">
+  <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAzklEQVR42mNkwAJEbFz/M9AAvDmymxFdjJEeFuNzCBO9LUe3i4nelqM7golhgAHjQPgeGQx4CLCQq/FWtQSGmFrrC/qEADbL8YlT1QGELCHVEUzUtJwcRzBR23JS1Q94Lhh1wNAqiuEJS68It6JLfSQVSkQ74NbKLpJ9pxZeRh0HYFgO9SVWgBY6hBxB0AHIliMbRqguwKWPJAfADCEmKMk1gy65gOwQGC2IRh1AFwdg6y7RC7w5sptxcETBQIQCzE4mfD1XenROGQe6ew4AEa9XeN7SklAAAAAASUVORK5CYII=">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <main class="scene" id="scene" aria-label="Stillwake chart">
+      <canvas id="board" aria-label="Nautical chart, use the arrow keys to move the focus, Space to place a buoy"></canvas>
+
+      <section class="overlay title-overlay" id="titleOverlay" aria-labelledby="titleHeading">
+        <div class="title-card">
+          <p class="eyebrow light">A hand-drawn chart-puzzle</p>
+          <h1 class="wordmark" id="titleHeading">Stillwake</h1>
+          <div class="title-flourish" aria-hidden="true"><span></span><i></i><span></span></div>
+          <p class="lede">The lanterns of the moonlit archipelago have gone dark. One small mailboat, a handful of brass buoys, and a harbor that will not open until every light is aboard.</p>
+          <div class="title-actions">
+            <button class="btn primary" id="beginBtn" type="button">Begin the voyage</button>
+            <button class="btn ghost light" id="titleHowBtn" type="button">How to play</button>
+          </div>
+          <p class="title-foot">12 charts &middot; no timer &middot; a route you can repair</p>
+        </div>
+      </section>
+
+      <section class="overlay how-overlay" id="howOverlay" aria-labelledby="howHeading" hidden>
+        <div class="how-card">
+          <div class="how-head">
+            <div>
+              <p class="eyebrow">The ship's rules</p>
+              <h2 id="howHeading">Keep the lanterns burning.</h2>
+            </div>
+            <button class="icon-btn" id="howCloseX" type="button" aria-label="Close how to play">&times;</button>
+          </div>
+          <div class="how-grid">
+            <article>
+              <h3><span>1</span> Place buoys</h3>
+              <p>Left-click open water to lay a brass buoy. Click it again to cycle its heading: east, south, west, north, then away. Right-click removes it. Lanterns, special water, the harbor, the mooring, land and reef take no buoy.</p>
+            </article>
+            <article>
+              <h3><span>2</span> Plan the wake</h3>
+              <p>The boat sails one cell at a time in its current heading. Entering a buoy's cell turns the bow to the buoy's heading. The dotted line is your preview.</p>
+            </article>
+            <article>
+              <h3><span>3</span> Read the water</h3>
+              <p>A current forces its own heading. A whirlpool turns the heading a quarter clockwise. Currents and whirlpools win over buoys, but buoys cannot be placed there.</p>
+            </article>
+            <article>
+              <h3><span>4</span> Carry every light</h3>
+              <p>Collect every gold lantern, then enter the harbor. The harbor refuses a boat that arrives early. Reefs, land and the chart's edge end the voyage; so does a closed loop.</p>
+            </article>
+          </div>
+          <div class="how-stars">
+            <div><b class="star gold">&#9733;</b><span>Reach the harbor and every lantern is yours.</span></div>
+            <div><b class="star gold">&#9733;&#9733;</b><span>Earn the second star at or under the chart's step par.</span></div>
+            <div><b class="star gold">&#9733;&#9733;&#9733;</b><span>Earn the third at or under the buoy par.</span></div>
+          </div>
+          <div class="how-keys">
+            <span><kbd>Arrows</kbd> move focus</span>
+            <span><kbd>Space</kbd> cycle buoy</span>
+            <span><kbd>Enter</kbd> set sail</span>
+            <span><kbd>R</kbd> repair route</span>
+            <span><kbd>C</kbd> clear buoys</span>
+            <span><kbd>P</kbd> pause</span>
+            <span><kbd>M</kbd> mute</span>
+          </div>
+          <div class="how-actions">
+            <button class="btn primary" id="closeHowBtn" type="button">Back to the chart</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="pause-veil" id="pauseVeil" hidden aria-label="Voyage paused">
+        <div class="pause-card">
+          <p class="eyebrow light">Voyage paused</p>
+          <h2>The boat holds its breath.</h2>
+          <p>No tide moves while the chart is paused. Your route is safe.</p>
+          <button class="btn primary" id="resumeBtn" type="button">Resume <span class="key">P</span></button>
+        </div>
+      </section>
+
+      <section class="overlay result-overlay" id="resultOverlay" aria-labelledby="resultTitle" hidden>
+        <div class="result-card">
+          <p class="eyebrow" id="resultKicker">Chart complete</p>
+          <h2 id="resultTitle">Every lantern wakes</h2>
+          <p class="result-reason" id="resultReason"></p>
+          <div class="result-stars" id="resultStars" aria-label="Stars earned"></div>
+          <div class="result-grid">
+            <div><span>Score</span><strong id="resultScore">0</strong></div>
+            <div><span>Best</span><strong id="resultBest">0</strong></div>
+            <div><span>Moves</span><strong id="resultSteps">0</strong></div>
+            <div><span>Buoys</span><strong id="resultBuoys">0</strong></div>
+          </div>
+          <div class="result-actions">
+            <button class="btn primary" id="resultNext" type="button">Next chart</button>
+            <button class="btn ghost light" id="resultReplay" type="button">Replay chart</button>
+            <button class="btn quiet" id="resultCharts" type="button">Chart list</button>
+          </div>
+        </div>
+      </section>
+
+      <p class="sr-only" id="liveStatus" role="status" aria-live="polite"></p>
+    </main>
+
+    <aside class="log" aria-label="Voyage log">
+      <header class="log-head">
+        <p class="eyebrow">The Lantern Post &middot; Chart Log</p>
+        <div class="brand-row">
+          <div class="brand">STILLWAKE</div>
+          <button class="link tiny" id="muteBtn" type="button" aria-pressed="false">Sound on</button>
+        </div>
+        <div class="chart-title-row">
+          <span class="chart-no" id="chartNumber">I</span>
+          <div>
+            <h2 id="chartName">First Light</h2>
+            <p class="chart-count">Chart <span id="chartIndexLabel">1</span> of 12</p>
+          </div>
+        </div>
+      </header>
+
+      <section class="log-section brief">
+        <p class="eyebrow">Ship's log</p>
+        <p id="objective">One turn, one lantern, and the harbor bell is already ringing.</p>
+        <p class="hint" id="hint">A buoy turns the bow the moment the boat enters its cell.</p>
+      </section>
+
+      <section class="gauges" aria-label="Voyage gauges">
+        <div class="gauge">
+          <span class="gauge-label">Lanterns</span>
+          <strong id="lanternStat">0 / 1</strong>
+          <i class="gauge-bar"><b id="lanternBar" style="width:0%"></b></i>
+        </div>
+        <div class="gauge">
+          <span class="gauge-label">Buoys</span>
+          <strong id="buoyStat">0 / 1</strong>
+          <i class="gauge-bar"><b id="buoyBar" style="width:0%"></b></i>
+        </div>
+        <div class="gauge">
+          <span class="gauge-label">Moves</span>
+          <strong id="stepStat">&mdash;</strong>
+          <span class="gauge-foot" id="parStat">par 5</span>
+        </div>
+      </section>
+
+      <div class="stars-line" id="starLine" aria-label="Best stars on this chart"></div>
+
+      <section class="log-section map-section">
+        <div class="map-head"><p class="eyebrow">Chart progress</p><span id="progressText">0 / 36 stars</span></div>
+        <canvas id="minimap" aria-label="Small progress map of the current chart"></canvas>
+      </section>
+
+      <section class="actions" aria-label="Voyage actions">
+        <button class="btn primary sail" id="sailBtn" type="button">Set sail <span class="key">Enter</span></button>
+        <div class="action-row">
+          <button class="btn tool" id="resetBtn" type="button">Repair route <span class="key">R</span></button>
+          <button class="btn tool" id="clearBtn" type="button">Clear <span class="key">C</span></button>
+        </div>
+        <button class="btn tool wide" id="pauseBtn" type="button" hidden>Pause <span class="key">P</span></button>
+      </section>
+
+      <section class="log-section charts-section">
+        <div class="map-head"><p class="eyebrow">Charts</p><span id="chartStarsTotal">12 charts</span></div>
+        <div class="chart-grid" id="chartGrid" role="group" aria-label="Choose a chart"></div>
+      </section>
+
+      <footer class="log-foot">
+        <button class="link" id="howBtn" type="button">How to play</button>
+        <span class="foot-dot" aria-hidden="true">&middot;</span>
+        <span class="foot-note">LMB buoy &middot; RMB remove &middot; Space cycle</span>
+      </footer>
+    </aside>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
